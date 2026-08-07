@@ -110,6 +110,7 @@ export interface PreferencesState {
   watcherUsePolling: boolean
 
   // ----- Edit modes (per-window, not persisted) -----
+  editMode: boolean
   typewriter: boolean
   focus: boolean
   sourceCode: boolean
@@ -133,7 +134,7 @@ interface SetUserDataPayload {
 }
 
 interface ModeTogglePayload {
-  type: keyof PreferencesState | 'typewriter' | 'focus' | 'sourceCode'
+  type: keyof PreferencesState | 'editMode' | 'typewriter' | 'focus' | 'sourceCode'
   checked: boolean
 }
 
@@ -225,6 +226,7 @@ export const usePreferencesStore = defineStore('preferences', {
     // --------------------------------------------------------------------------
 
     // Edit modes of the current window (not part of persistent settings)
+    editMode: false, // documents always open in the static read-only viewer
     typewriter: false, // typewriter mode
     focus: false,
     sourceCode: false, // source code mode
@@ -269,6 +271,11 @@ export const usePreferencesStore = defineStore('preferences', {
     TOGGLE_VIEW_MODE(entryName: keyof PreferencesState | string): void {
       const target = this as unknown as Record<string, unknown>
       target[entryName as string] = !target[entryName as string]
+      if (entryName === 'editMode' && !target.editMode) {
+        // Source mode is an editor implementation detail and must never expose
+        // Markdown syntax after returning to the read-only viewer.
+        target.sourceCode = false
+      }
     },
 
     ASK_FOR_USER_PREFERENCE(): void {
@@ -312,7 +319,9 @@ export const usePreferencesStore = defineStore('preferences', {
       window.electron.ipcRenderer.on('mt::toggle-view-mode-entry', (_event, entryName) => {
         this.TOGGLE_VIEW_MODE(entryName)
         const target = this as unknown as Record<string, unknown>
-        this.DISPATCH_EDITOR_VIEW_STATE({ [entryName]: target[entryName] })
+        const state: Record<string, unknown> = { [entryName]: target[entryName] }
+        if (entryName === 'editMode' && !target.editMode) state.sourceCode = false
+        this.DISPATCH_EDITOR_VIEW_STATE(state)
       })
     },
 
@@ -322,7 +331,9 @@ export const usePreferencesStore = defineStore('preferences', {
         const name = entryName as string
         this.TOGGLE_VIEW_MODE(name)
         const target = this as unknown as Record<string, unknown>
-        this.DISPATCH_EDITOR_VIEW_STATE({ [name]: target[name] })
+        const state: Record<string, unknown> = { [name]: target[name] }
+        if (name === 'editMode' && !target.editMode) state.sourceCode = false
+        this.DISPATCH_EDITOR_VIEW_STATE(state)
       })
     },
 

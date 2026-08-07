@@ -113,6 +113,7 @@
       "toggleSidebar": "切换侧边栏",
       "toggleTabbar": "切换标签栏",
       "commandPalette": "命令面板",
+      "editMode": "编辑模式",
       "sourceCodeMode": "源码模式",
       "typewriterMode": "打字机模式",
       "focusMode": "专注模式",

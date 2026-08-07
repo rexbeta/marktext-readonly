@@ -16,6 +16,18 @@ export default function(keybindings: Keybindings): MenuItemConstructorOptions {
       type: 'separator'
     },
     {
+      id: 'editModeMenuItem',
+      label: t('menu.view.editMode'),
+      type: 'checkbox',
+      checked: false,
+      click(_item, focusedWindow) {
+        actions.toggleEditMode(focusedWindow as BrowserWindow | undefined)
+      }
+    },
+    {
+      type: 'separator'
+    },
+    {
       id: 'sourceCodeModeMenuItem',
       label: t('menu.view.sourceCodeMode'),
       accelerator: keybindings.getAccelerator('view.source-code-mode') ?? undefined,

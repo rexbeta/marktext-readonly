@@ -103,6 +103,7 @@ export default function(
       type: 'separator'
     },
     {
+      id: 'saveMenuItem',
       label: t('menu.file.save'),
       accelerator: keybindings.getAccelerator('file.save') ?? undefined,
       click(_menuItem, browserWindow) {
@@ -110,6 +111,7 @@ export default function(
       }
     },
     {
+      id: 'saveAsMenuItem',
       label: t('menu.file.saveAs'),
       accelerator: keybindings.getAccelerator('file.save-as') ?? undefined,
       click(_menuItem, browserWindow) {
@@ -129,6 +131,7 @@ export default function(
       type: 'separator'
     },
     {
+      id: 'moveToMenuItem',
       label: t('menu.file.moveTo'),
       accelerator: keybindings.getAccelerator('file.move-file') ?? undefined,
       click(_menuItem, browserWindow) {
@@ -136,6 +139,7 @@ export default function(
       }
     },
     {
+      id: 'renameMenuItem',
       label: t('menu.file.rename'),
       accelerator: keybindings.getAccelerator('file.rename-file') ?? undefined,
       click(_menuItem, browserWindow) {

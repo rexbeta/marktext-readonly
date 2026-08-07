@@ -6,6 +6,7 @@ type Win = BrowserWindow | null | undefined
 
 const typewriterModeMenuItemId = 'typewriterModeMenuItem'
 const focusModeMenuItemId = 'focusModeMenuItem'
+const editModeMenuItemId = 'editModeMenuItem'
 
 const toggleTypeMode = (win: Win, type: string): void => {
   if (win && win.webContents) {
@@ -45,6 +46,10 @@ export const showCommandPalette = (win: Win): void => {
 
 export const toggleFocusMode = (win: Win): void => {
   toggleTypeMode(win, 'focus')
+}
+
+export const toggleEditMode = (win: Win): void => {
+  toggleTypeMode(win, 'editMode')
 }
 
 export const toggleSourceCodeMode = (win: Win): void => {
@@ -126,9 +131,39 @@ export const viewLayoutChanged = (
         break
       case 'sourceCode':
         changeMenuByName('sourceCodeModeMenuItem', !!value)
-        disableMenuByName(focusModeMenuItemId, !value)
-        disableMenuByName(typewriterModeMenuItemId, !value)
+        // Focus/typewriter are editor-only and stay disabled while the static
+        // reader is active, regardless of the source-code checkbox state.
+        disableMenuByName(
+          focusModeMenuItemId,
+          !!applicationMenu.getMenuItemById(editModeMenuItemId)?.checked && !value
+        )
+        disableMenuByName(
+          typewriterModeMenuItemId,
+          !!applicationMenu.getMenuItemById(editModeMenuItemId)?.checked && !value
+        )
         break
+      case 'editMode': {
+        const enabled = !!value
+        changeMenuByName(editModeMenuItemId, enabled)
+        for (const id of ['sourceCodeModeMenuItem', 'typewriterModeMenuItem', 'focusModeMenuItem']) {
+          disableMenuByName(id, enabled)
+        }
+        for (const id of [
+          'saveMenuItem',
+          'saveAsMenuItem',
+          'autoSaveMenuItem',
+          'moveToMenuItem',
+          'renameMenuItem'
+        ]) {
+          const item = applicationMenu.getMenuItemById(id)
+          if (item) item.enabled = enabled
+        }
+        for (const id of ['paragraphMenuEntry', 'formatMenuItem']) {
+          const item = applicationMenu.getMenuItemById(id)
+          item?.submenu?.items.forEach((child) => (child.enabled = enabled))
+        }
+        break
+      }
       case 'typewriter':
         changeMenuByName(typewriterModeMenuItemId, value)
         break

@@ -113,6 +113,7 @@
       "toggleSidebar": "Basculer la barre latérale",
       "toggleTabbar": "Basculer la barre d'onglets",
       "commandPalette": "Palette de commandes",
+      "editMode": "Mode édition",
       "sourceCodeMode": "Mode code source",
       "typewriterMode": "Mode machine à écrire",
       "focusMode": "Mode focus",

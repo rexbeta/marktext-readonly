@@ -24,6 +24,7 @@
         :cursor="cursor"
         :muya-index-cursor="muyaIndexCursor"
         :source-code="sourceCode"
+        :edit-mode="editMode"
         :show-tab-bar="showTabBar"
         :text-direction="textDirection"
         :platform="platform"
@@ -76,7 +77,8 @@ const timer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const { windowActive, platform, init } = storeToRefs(mainStore)
 const { showTabBar } = storeToRefs(layoutStore)
-const { sourceCode, theme, customCss, textDirection, zoom } = storeToRefs(preferencesStore)
+const { editMode, sourceCode, theme, customCss, textDirection, zoom } =
+  storeToRefs(preferencesStore)
 const { projectTree } = storeToRefs(projectStore)
 const { currentFile } = storeToRefs(editorStore)
 
@@ -118,6 +120,20 @@ watch(customCss, (value, oldValue) => {
 watch(zoom, (zoomValue) => {
   bus.emit('mt::window-zoom', zoomValue)
 })
+
+// Editing permission is deliberately not sticky across documents. Every file
+// or tab selection starts in the safe static viewer and must be explicitly
+// unlocked again from View -> Edit Mode.
+watch(
+  () => currentFile.value?.id,
+  (id, oldId) => {
+    if (id !== oldId && editMode.value) {
+      preferencesStore.SET_MODE({ type: 'editMode', checked: false })
+      preferencesStore.SET_MODE({ type: 'sourceCode', checked: false })
+      preferencesStore.DISPATCH_EDITOR_VIEW_STATE({ editMode: false, sourceCode: false })
+    }
+  }
+)
 
 const setupDragDropHandler = (): void => {
   window.addEventListener(

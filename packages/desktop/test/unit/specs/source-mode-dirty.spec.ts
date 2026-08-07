@@ -24,6 +24,7 @@ vi.mock('@/services/notification', () => ({
 }))
 
 import { useEditorStore } from '@/store/editor'
+import { usePreferencesStore } from '@/store/preferences'
 
 // #4455: editing in Source Code mode and closing without switching back to
 // WYSIWYG silently dropped the save prompt. Source-mode content changes reach
@@ -33,6 +34,7 @@ import { useEditorStore } from '@/store/editor'
 describe('useEditorStore LISTEN_FOR_CONTENT_CHANGE — source-mode dirty tracking (#4455)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    usePreferencesStore().SET_MODE({ type: 'editMode', checked: true })
     vi.clearAllMocks()
   })
 
@@ -67,6 +69,17 @@ describe('useEditorStore LISTEN_FOR_CONTENT_CHANGE — source-mode dirty trackin
 
     store.LISTEN_FOR_CONTENT_CHANGE({ id: 'tab-1', markdown: 'hello' })
 
+    expect(tab.isSaved).toBe(true)
+  })
+
+  it('ignores content-change events while the static reader is active', () => {
+    const store = useEditorStore()
+    const tab = makeSavedTab(store)
+    usePreferencesStore().SET_MODE({ type: 'editMode', checked: false })
+
+    store.LISTEN_FOR_CONTENT_CHANGE({ id: 'tab-1', markdown: 'must not be accepted' })
+
+    expect(tab.markdown).toBe('hello')
     expect(tab.isSaved).toBe(true)
   })
 

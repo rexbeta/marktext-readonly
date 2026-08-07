@@ -208,6 +208,19 @@ export const waitForEditor = async(page: Page, timeout = 15000): Promise<void> =
   )
 }
 
+// Production windows intentionally start in the static reader. Legacy editor
+// regression tests opt in here so they continue testing Muya rather than
+// silently depending on a writable startup state.
+export const enterEditMode = async(
+  page: Page,
+  app: ElectronApplication
+): Promise<void> => {
+  if (await page.locator('.editor-component').count()) return
+  await waitForMenuReady(app)
+  await clickMenuById(app, 'editModeMenuItem')
+  await waitForEditor(page)
+}
+
 export const enterSourceMode = async(page: Page, app: ElectronApplication): Promise<void> => {
   const already = await page.evaluate(() => !!document.querySelector('.source-code .CodeMirror'))
   if (already) return
@@ -332,8 +345,7 @@ export const launchWithDoc = async(
   options: LaunchOptions = {}
 ): Promise<LaunchResult> => {
   const { app, page } = await launchElectron([relativeFixture], options)
-  await waitForEditor(page)
-  await waitForMenuReady(app)
+  await enterEditMode(page, app)
   return { app, page }
 }
 
@@ -347,8 +359,7 @@ export const launchWithMarkdown = async(
 ): Promise<LaunchWithMarkdownResult> => {
   const filePath = writeTempMarkdown(markdown)
   const { app, page } = await launchElectron([filePath], options)
-  await waitForEditor(page)
-  await waitForMenuReady(app)
+  await enterEditMode(page, app)
   return { app, page, filePath }
 }
 

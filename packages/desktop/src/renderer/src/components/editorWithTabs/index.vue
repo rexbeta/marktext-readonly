@@ -5,14 +5,20 @@
   >
     <tabs v-show="showTabBar" />
     <div class="container">
+      <reader
+        v-if="!editMode"
+        :markdown="markdown"
+        :text-direction="textDirection"
+      />
       <editor
+        v-else
         :markdown="markdown"
         :cursor="cursor"
         :text-direction="textDirection"
         :platform="platform"
       />
       <source-code
-        v-if="sourceCode"
+        v-if="editMode && sourceCode"
         :markdown="markdown"
         :muya-index-cursor="muyaIndexCursor"
         :text-direction="textDirection"
@@ -27,6 +33,7 @@ import { useLayoutStore } from '@/store/layout'
 import { storeToRefs } from 'pinia'
 import Tabs from './tabs.vue'
 import Editor from './editor.vue'
+import Reader from './reader.vue'
 import SourceCode from './sourceCode.vue'
 import TabNotifications from './notifications.vue'
 
@@ -38,6 +45,7 @@ defineProps<{
   cursor: unknown
   muyaIndexCursor?: unknown
   sourceCode: boolean
+  editMode: boolean
   showTabBar: boolean
   textDirection: string
   platform: string

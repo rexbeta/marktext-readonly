@@ -113,6 +113,7 @@
       "toggleSidebar": "사이드바 토글",
       "toggleTabbar": "탭바 토글",
       "commandPalette": "명령 팔레트",
+      "editMode": "편집 모드",
       "sourceCodeMode": "소스 코드 모드",
       "typewriterMode": "타자기 모드",
       "focusMode": "집중 모드",

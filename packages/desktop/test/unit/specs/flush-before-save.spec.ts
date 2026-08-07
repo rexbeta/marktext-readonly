@@ -26,6 +26,7 @@ vi.mock('@/services/notification', () => ({
 }))
 
 import { useEditorStore } from '@/store/editor'
+import { usePreferencesStore } from '@/store/preferences'
 import bus from '@/bus'
 
 // #3803: the store snapshots `currentFile.markdown` (refreshed only on the
@@ -88,6 +89,7 @@ describe('editor store — flush pending edits before saving (#3803)', () => {
 
   beforeEach(() => {
     setActivePinia(createPinia())
+    usePreferencesStore().SET_MODE({ type: 'editMode', checked: true })
     vi.clearAllMocks()
   })
 
@@ -120,6 +122,21 @@ describe('editor store — flush pending edits before saving (#3803)', () => {
     const call = sendSpy.mock.calls.find((c) => c[0] === 'mt::response-file-save-as')
     expect(call).toBeDefined()
     expect(call?.[MARKDOWN_ARG]).toBe(FLUSHED)
+  })
+
+  it('blocks save and save-as while the static reader is active', () => {
+    const store = useEditorStore()
+    seedCurrentFile(store)
+    usePreferencesStore().SET_MODE({ type: 'editMode', checked: false })
+    const sendSpy = vi.spyOn(window.electron.ipcRenderer, 'send')
+
+    store.FILE_SAVE()
+    store.FILE_SAVE_AS()
+
+    expect(sendSpy).not.toHaveBeenCalledWith(
+      expect.stringMatching(/^mt::response-file-save/),
+      expect.anything()
+    )
   })
 
   // MOVE_FILE_TO / RESPONSE_FOR_RENAME only transmit `markdown` in their untitled

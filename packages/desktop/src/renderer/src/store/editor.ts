@@ -511,6 +511,7 @@ export const useEditorStore = defineStore('editor', {
 
     FILE_SAVE(): void {
       if (!this.currentFile) return
+      if (!usePreferencesStore().editMode) return
       this.flushActiveEditor()
       const projectStore = useProjectStore()
       const { id, filename, pathname, markdown } = this.currentFile
@@ -541,6 +542,7 @@ export const useEditorStore = defineStore('editor', {
 
     FILE_SAVE_AS(): void {
       if (!this.currentFile) return
+      if (!usePreferencesStore().editMode) return
       this.flushActiveEditor()
       const projectStore = useProjectStore()
       const { id, filename, pathname, markdown } = this.currentFile
@@ -716,6 +718,7 @@ export const useEditorStore = defineStore('editor', {
 
     MOVE_FILE_TO(): void {
       if (!this.currentFile) return
+      if (!usePreferencesStore().editMode) return
       this.flushActiveEditor()
       const projectStore = useProjectStore()
       const { id, filename, pathname, markdown } = this.currentFile
@@ -759,6 +762,7 @@ export const useEditorStore = defineStore('editor', {
 
     RESPONSE_FOR_RENAME(): void {
       if (!this.currentFile) return
+      if (!usePreferencesStore().editMode) return
       this.flushActiveEditor()
       const projectStore = useProjectStore()
       const { id, filename, pathname, markdown } = this.currentFile
@@ -784,6 +788,7 @@ export const useEditorStore = defineStore('editor', {
     // ask for main process to rename this file to a new name `newFilename`
     RENAME(newFilename: string): void {
       if (!this.currentFile) return
+      if (!usePreferencesStore().editMode) return
       const { id, pathname, filename } = this.currentFile
       if (typeof filename === 'string' && filename !== newFilename) {
         const newPathname = window.path.join(window.path.dirname(pathname), newFilename)
@@ -893,8 +898,7 @@ export const useEditorStore = defineStore('editor', {
           markdownList,
           lineEnding,
           sideBarVisibility,
-          tabBarVisibility,
-          sourceCodeModeEnabled
+          tabBarVisibility
         } = config
 
         window.electron.ipcRenderer.send('mt::window-initialized')
@@ -906,10 +910,11 @@ export const useEditorStore = defineStore('editor', {
           showTabBar: !!tabBarVisibility
         })
         layoutStore.DISPATCH_LAYOUT_MENU_ITEMS()
-        preferencesStore.SET_MODE({
-          type: 'sourceCode',
-          checked: !!sourceCodeModeEnabled
-        })
+        // This fork always opens documents in the static reader. An editor,
+        // including source-code mode, is mounted only after explicit opt-in.
+        preferencesStore.SET_MODE({ type: 'editMode', checked: false })
+        preferencesStore.SET_MODE({ type: 'sourceCode', checked: false })
+        preferencesStore.DISPATCH_EDITOR_VIEW_STATE({ editMode: false, sourceCode: false })
 
         if (addBlankTab) {
           this.NEW_UNTITLED_TAB({ selected: true })
@@ -1399,6 +1404,7 @@ export const useEditorStore = defineStore('editor', {
     }: ContentChangePayload): void {
       const preferencesStore = usePreferencesStore()
       const { autoSave } = preferencesStore
+      if (!preferencesStore.editMode) return
       if (!id) {
         throw new Error('Listen for document change but id was not set!')
       } else if (this.tabs.length === 0) {
@@ -1603,6 +1609,7 @@ export const useEditorStore = defineStore('editor', {
 
     SET_LINE_ENDING(lineEnding: LineEnding | string): void {
       if (!this.currentFile) return
+      if (!usePreferencesStore().editMode) return
       const { lineEnding: oldLineEnding } = this.currentFile
       if (lineEnding !== oldLineEnding) {
         this.currentFile.lineEnding = lineEnding

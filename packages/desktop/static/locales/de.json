@@ -113,6 +113,7 @@
       "toggleSidebar": "Seitenleiste umschalten",
       "toggleTabbar": "Tab-Leiste umschalten",
       "commandPalette": "Befehlspalette",
+      "editMode": "Bearbeitungsmodus",
       "sourceCodeMode": "Quellcode-Modus",
       "typewriterMode": "Schreibmaschinen-Modus",
       "focusMode": "Fokus-Modus",

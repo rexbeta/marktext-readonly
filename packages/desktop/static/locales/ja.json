@@ -113,6 +113,7 @@
       "toggleSidebar": "サイドバーの切り替え",
       "toggleTabbar": "タブバーの切り替え",
       "commandPalette": "コマンドパレット",
+      "editMode": "編集モード",
       "sourceCodeMode": "ソースコードモード",
       "typewriterMode": "タイプライターモード",
       "focusMode": "フォーカスモード",

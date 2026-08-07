@@ -113,6 +113,7 @@
       "toggleSidebar": "Kenar Çubuğunu Aç/Kapat",
       "toggleTabbar": "Sekme Çubuğunu Aç/Kapat",
       "commandPalette": "Komut Paleti",
+      "editMode": "Düzenleme Modu",
       "sourceCodeMode": "Kaynak Kod Modu",
       "typewriterMode": "Daktilo Modu",
       "focusMode": "Odak Modu",

@@ -1,0 +1,21 @@
+packages/desktop/electron-builder.yml
+  s_e8ba4c8116d0e2::t_782643140becf1 112-115
+README.md
+  s_e8ba4c8116d0e2::t_782643140becf1 52-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "4b0c26206e6a89f25e06759fdd92b35e4d3e4d39",
+  "prompts": {},
+  "sessions": {
+    "s_e8ba4c8116d0e2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fda2c-cb97-79e1-85e2-64d79a9035e8",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuqinming <liuqinming@zuoyebang.com>"
+    }
+  }
+}

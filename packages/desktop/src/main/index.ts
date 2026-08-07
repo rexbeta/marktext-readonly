@@ -18,6 +18,9 @@ import { registerSandboxIpcHandlers } from './ipc'
 process.env.MARKTEXT_VERSION = MARKTEXT_VERSION
 process.env.MARKTEXT_VERSION_STRING = MARKTEXT_VERSION_STRING
 
+// Keep this fork's preferences, caches and logs separate from upstream MarkText.
+app.setName('MarkText Readonly')
+
 // -----------------------------------------------
 // Exception handling and logging setup
 setupExceptionHandler()
@@ -53,7 +56,7 @@ initializeLogger(appEnvironment)
 // Handles native level crashes
 crashReporter.start({
   companyName: '',
-  productName: 'marktext',
+  productName: 'MarkText Readonly',
   uploadToServer: false, // collect locally
   compress: true
 })
@@ -83,7 +86,7 @@ if (!process.mas && process.env.NODE_ENV !== 'development') {
 registerSandboxIpcHandlers()
 
 // Windows-specific AppUserModelID
-electronApp.setAppUserModelId('com.electron.marktext')
+electronApp.setAppUserModelId('com.github.rexbeta.marktext-readonly')
 
 // Dev shortcuts and reload suppression
 app.on('browser-window-created', (_, window) => {

@@ -1,7 +1,7 @@
 {
   "name": "marktext",
-  "version": "0.20.0-dev",
-  "description": "MarkText",
+  "version": "0.20.0-readonly.1",
+  "description": "A read-only-first Markdown viewer based on MarkText",
   "main": "./out/main/index.js",
   "author": {
     "name": "Jocs",
@@ -25,10 +25,10 @@
       "url": "https://github.com/Tkaixiang"
     }
   ],
-  "homepage": "https://github.com/marktext/marktext",
+  "homepage": "https://github.com/rexbeta/marktext-readonly",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/marktext/marktext.git"
+    "url": "git+https://github.com/rexbeta/marktext-readonly.git"
   },
   "scripts": {
     "minify-locales": "tsx ../../scripts/minify-locales.ts",

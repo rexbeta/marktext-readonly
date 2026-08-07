@@ -1,9 +1,9 @@
 {
   "name": "marktext-monorepo",
-  "version": "0.20.0-dev",
-  "description": "MarkText monorepo root",
+  "version": "0.20.0-readonly.1",
+  "description": "Read-only-first MarkText fork with explicit opt-in editing",
   "private": true,
-  "homepage": "https://github.com/marktext/marktext",
+  "homepage": "https://github.com/rexbeta/marktext-readonly",
   "packageManager": "pnpm@10.33.4",
   "engines": {
     "node": ">=20.19.0",

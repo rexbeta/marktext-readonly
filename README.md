@@ -49,8 +49,10 @@ Prebuilt packages are published on the
 [GitHub Releases page](https://github.com/rexbeta/marktext-readonly/releases).
 
 The first release provides a macOS Apple Silicon (`arm64`) DMG and ZIP. These community builds
-are currently unsigned and not notarized. Review the source before installing; if macOS shows a
-Gatekeeper prompt, use Finder's **Open** action to confirm that you want to run the application.
+are ad-hoc signed so the application bundle can be verified for integrity, but they are not
+Developer ID signed or notarized by Apple. Review the source before installing. If macOS blocks
+the first launch, open **System Settings → Privacy & Security** and choose **Open Anyway** only
+after confirming that you downloaded the application from this repository.
 
 The application uses its own bundle identifier and product name, so it can coexist with the
 official MarkText application.

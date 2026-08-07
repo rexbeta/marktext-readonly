@@ -1,0 +1,27 @@
+packages/desktop/src/renderer/src/pages/app.vue
+  s_e8ba4c8116d0e2::t_8a40df48a17ae0 45-51,86,126-129
+  s_e8ba4c8116d0e2::t_0913eef5f0f59a 130
+packages/desktop/src/renderer/src/components/editorWithTabs/reader.vue
+  s_e8ba4c8116d0e2::t_8a40df48a17ae0 81-98,222,230-231,240-246
+packages/desktop/src/renderer/src/components/editorWithTabs/editor.vue
+  s_e8ba4c8116d0e2::t_8a40df48a17ae0 1974-1979,1983-1989
+packages/desktop/test/e2e/readonly-mode.spec.ts
+  s_e8ba4c8116d0e2::t_c8c17fd2c7b6a4 8-12,23-24,71,76-82,87-89,120-126,130-138,143-145
+  s_e8ba4c8116d0e2::t_e5e39a97dce947 72-75,83-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "ac92250d0cfd6f5685341469087752a4d21c50fe",
+  "prompts": {},
+  "sessions": {
+    "s_e8ba4c8116d0e2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fda2c-cb97-79e1-85e2-64d79a9035e8",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuqinming <liuqinming@zuoyebang.com>"
+    }
+  }
+}

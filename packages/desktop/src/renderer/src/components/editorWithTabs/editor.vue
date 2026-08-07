@@ -1971,9 +1971,22 @@ onMounted(() => {
   document.addEventListener('keyup', keyup)
 
   setEditorWidth(editorLineWidth.value)
+
+  // Mode switches mount a fresh Muya instance. Restore the position captured
+  // by the static reader instead of treating the mount as a new document.
+  if (typeof currentFile.value?.scrollTop === 'number') {
+    scrollToCords(currentFile.value.scrollTop)
+  }
 })
 
 onBeforeUnmount(() => {
+  // Persist synchronously so the reader created by this same mode switch can
+  // restore the last visible position even if no final scroll event fires.
+  const activeContainer = getScrollContainer()
+  if (currentFile.value?.id && activeContainer) {
+    editorStore.updateScrollPosition(currentFile.value.id, activeContainer.scrollTop)
+  }
+
   bus.off('file-loaded', setMarkdownToEditor)
   bus.off('invalidate-image-cache', handleInvalidateImageCache)
   bus.off('undo', handleUndo)

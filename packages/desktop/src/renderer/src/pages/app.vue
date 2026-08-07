@@ -42,7 +42,13 @@
 import { computed, watch, nextTick, onMounted, ref } from 'vue'
 import { useMainStore } from '@/store'
 import { storeToRefs } from 'pinia'
-import { addStyles, addThemeStyle, addCustomStyle, type AddStylesOptions } from '@/util/theme'
+import {
+  addStyles,
+  addThemeStyle,
+  addCustomStyle,
+  setEditorWidth,
+  type AddStylesOptions
+} from '@/util/theme'
 import Recent from '@/components/recent/index.vue'
 import EditorWithTabs from '@/components/editorWithTabs/index.vue'
 import TitleBar from '@/components/titleBar/index.vue'
@@ -77,7 +83,7 @@ const timer = ref<ReturnType<typeof setTimeout> | null>(null)
 
 const { windowActive, platform, init } = storeToRefs(mainStore)
 const { showTabBar } = storeToRefs(layoutStore)
-const { editMode, sourceCode, theme, customCss, textDirection, zoom } =
+const { editMode, sourceCode, theme, customCss, editorLineWidth, textDirection, zoom } =
   storeToRefs(preferencesStore)
 const { projectTree } = storeToRefs(projectStore)
 const { currentFile } = storeToRefs(editorStore)
@@ -116,6 +122,11 @@ watch(customCss, (value, oldValue) => {
     })
   }
 })
+
+// The document width is shared by the static reader, Muya and source mode.
+// Applying it at the application level makes the saved preference effective
+// before an editor is ever mounted (the default startup surface is read-only).
+watch(editorLineWidth, setEditorWidth, { immediate: true })
 
 watch(zoom, (zoomValue) => {
   bus.emit('mt::window-zoom', zoomValue)

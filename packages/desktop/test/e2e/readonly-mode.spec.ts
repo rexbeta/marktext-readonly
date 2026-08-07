@@ -5,6 +5,11 @@ import * as os from 'node:os'
 import * as path from 'node:path'
 import { clickMenuById, launchElectron, sendIpcToRenderer, waitForMenuReady } from './helpers'
 
+const filler = Array.from(
+  { length: 80 },
+  (_, index) => `## Section ${index + 1}\n\nParagraph ${index + 1} for scroll restoration.\n`
+).join('\n')
+
 const markdown = `# Reader heading
 
 Use \`iot-device:<env>:v1:cache:device:sn:*\` here.
@@ -15,6 +20,8 @@ Use \`iot-device:<env>:v1:cache:device:sn:*\` here.
 flowchart LR
   A[Open] --> B[Rendered]
 \`\`\`
+
+${filler}
 `
 
 test.describe('default read-only mode', () => {
@@ -61,6 +68,25 @@ test.describe('default read-only mode', () => {
     expect(copied).toBe(selected)
   })
 
+  test('applies Max width while the document is still read-only', async() => {
+    const initialWidth = await page
+      .locator('.readonly-content .markdown-body')
+      .evaluate((element) => element.getBoundingClientRect().width)
+
+    await sendIpcToRenderer(app, 'mt::user-preference', { editorLineWidth: '80%' })
+    await expect
+      .poll(() =>
+        page.evaluate(() => document.querySelector('#editor-width')?.textContent ?? '')
+      )
+      .toContain('80%')
+
+    const updatedWidth = await page
+      .locator('.readonly-content .markdown-body')
+      .evaluate((element) => element.getBoundingClientRect().width)
+    expect(updatedWidth).toBeGreaterThan(initialWidth + 50)
+    await expect(page.locator('.editor-component')).toHaveCount(0)
+  })
+
   test('disables save and ignores typing in reader mode', async() => {
     const menuState = await app.evaluate(({ Menu }) => {
       const menu = Menu.getApplicationMenu()
@@ -91,13 +117,31 @@ test.describe('default read-only mode', () => {
     await expect(page.locator('#reader-heading')).toBeVisible()
   })
 
-  test('requires explicit Edit Mode and returns safely to reader mode', async() => {
+  test('preserves scroll position while entering and leaving Edit Mode', async() => {
+    await page.locator('.readonly-reader').evaluate((element) => {
+      element.scrollTop = 900
+      element.dispatchEvent(new Event('scroll'))
+    })
+    await page.waitForTimeout(100)
+
     await clickMenuById(app, 'editModeMenuItem')
     await page.waitForSelector('.editor-component', { timeout: 10000 })
     await expect(page.locator('.readonly-reader')).toHaveCount(0)
+    await expect
+      .poll(() => page.locator('.editor-component').evaluate((element) => element.scrollTop))
+      .toBeGreaterThan(850)
+
+    await page.locator('.editor-component').evaluate((element) => {
+      element.scrollTop = 1400
+      element.dispatchEvent(new Event('scroll'))
+    })
+    await page.waitForTimeout(100)
 
     await clickMenuById(app, 'editModeMenuItem')
     await page.waitForSelector('.readonly-reader .markdown-body', { timeout: 10000 })
     await expect(page.locator('.editor-component')).toHaveCount(0)
+    await expect
+      .poll(() => page.locator('.readonly-reader').evaluate((element) => element.scrollTop))
+      .toBeGreaterThan(1350)
   })
 })

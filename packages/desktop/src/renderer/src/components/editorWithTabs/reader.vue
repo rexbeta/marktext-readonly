@@ -78,6 +78,24 @@ const query = ref('')
 const matches = ref<HTMLElement[]>([])
 const activeMatch = ref(-1)
 let renderVersion = 0
+let scrollHandler: (() => void) | null = null
+
+const persistScrollPosition = () => {
+  const tab = editorStore.currentFile
+  const container = scrollContainer.value
+  if (tab?.id && container) {
+    editorStore.updateScrollPosition(tab.id, container.scrollTop)
+  }
+}
+
+const restoreScrollPosition = () => {
+  const scrollTop = editorStore.currentFile?.scrollTop
+  if (typeof scrollTop !== 'number') return
+  // Wait until the newly rendered article has a measurable scroll height.
+  requestAnimationFrame(() => {
+    if (scrollContainer.value) scrollContainer.value.scrollTop = scrollTop
+  })
+}
 
 const clearHighlights = () => {
   if (!content.value) return
@@ -201,6 +219,7 @@ const render = async () => {
   content.value.querySelectorAll('p').forEach((paragraph) => {
     if (paragraph.textContent?.trim().toUpperCase() === '[TOC]') paragraph.remove()
   })
+  restoreScrollPosition()
   if (query.value) highlightMatches()
 }
 
@@ -208,6 +227,8 @@ watch(() => props.markdown, render, { immediate: true })
 watch(query, highlightMatches)
 
 onMounted(() => {
+  scrollHandler = persistScrollPosition
+  scrollContainer.value?.addEventListener('scroll', scrollHandler, { passive: true })
   bus.on('find', openSearch)
   bus.on('findNext', () => find(1))
   bus.on('findPrev', () => find(-1))
@@ -216,6 +237,13 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  // Capture the latest position synchronously before Vue removes the reader;
+  // the editor mounted in the same mode switch restores this exact value.
+  persistScrollPosition()
+  if (scrollHandler) {
+    scrollContainer.value?.removeEventListener('scroll', scrollHandler)
+    scrollHandler = null
+  }
   renderVersion++
   bus.off('find', openSearch)
   bus.off('findNext')

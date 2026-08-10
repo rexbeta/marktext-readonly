@@ -4,9 +4,11 @@ import { isFile } from 'common/filesystem'
 import * as actions from '../actions/help'
 import { checkUpdates } from '../actions/marktext'
 import { t } from '../../i18n'
+import { AUTO_UPDATE_ENABLED, GITHUB_REPO_URL } from '../../config'
 
 /// Check whether the package is updatable at runtime.
 const isUpdatable = (): boolean => {
+  if (!AUTO_UPDATE_ENABLED) return false
   // TODO: If not updatable, allow to check whether there is a new version available.
 
   const resFile = isFile(path.join(process.resourcesPath, 'app-update.yml'))
@@ -41,7 +43,7 @@ export default function(): MenuItemConstructorOptions {
     {
       label: t('menu.help.changelog'),
       click() {
-        shell.openExternal('https://github.com/marktext/marktext/releases')
+        shell.openExternal(`${GITHUB_REPO_URL}/releases`)
       }
     },
     {
@@ -65,19 +67,21 @@ export default function(): MenuItemConstructorOptions {
     {
       label: t('menu.help.askQuestion'),
       click() {
+        // General usage questions still belong to the upstream community;
+        // fork-specific defects use this fork's Issues entry below.
         shell.openExternal('https://github.com/marktext/marktext/discussions')
       }
     },
     {
       label: t('menu.help.reportBug'),
       click() {
-        shell.openExternal('https://github.com/marktext/marktext/issues')
+        shell.openExternal(`${GITHUB_REPO_URL}/issues`)
       }
     },
     {
       label: t('menu.help.viewSource'),
       click() {
-        shell.openExternal('https://github.com/marktext/marktext')
+        shell.openExternal(GITHUB_REPO_URL)
       }
     },
     {
@@ -86,7 +90,7 @@ export default function(): MenuItemConstructorOptions {
     {
       label: t('menu.help.license'),
       click() {
-        shell.openExternal('https://github.com/marktext/marktext/blob/develop/LICENSE')
+        shell.openExternal(`${GITHUB_REPO_URL}/blob/develop/LICENSE`)
       }
     }
   ]

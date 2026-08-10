@@ -1,4 +1,5 @@
 import type { Muya } from '../muya';
+import type { IMuyaOptions } from '../types';
 import githubMarkdownCss from 'github-markdown-css/github-markdown-light.css?inline';
 import katexCss from 'katex/dist/katex.css?inline';
 import prismCss from 'prismjs/themes/prism.css?inline';
@@ -30,7 +31,15 @@ const CDN_STYLESHEET_LINKS = `  <!-- https://cdnjs.com/libraries/github-markdown
 export class MarkdownToHtml {
     private _exportContainer: HTMLDivElement | null = null;
 
-    constructor(public markdown: string, private _muya?: Muya) {}
+    constructor(
+        public markdown: string,
+        private _muya?: Muya,
+        private _renderOptions: Partial<IMuyaOptions> = {},
+    ) {}
+
+    private get _options(): Partial<IMuyaOptions> {
+        return { ...this._muya?.options, ...this._renderOptions };
+    }
 
     private async _renderMermaid() {
         const codes = this._exportContainer!.querySelectorAll(
@@ -54,11 +63,10 @@ export class MarkdownToHtml {
             return;
 
         const mermaid = await loadRenderer('mermaid');
-        // We only export light theme, so set mermaid theme to `default`, in the future, we can choose which theme to export.
         mermaid.initialize({
             startOnLoad: false,
             securityLevel: 'strict',
-            theme: 'default',
+            theme: this._options.mermaidTheme ?? 'default',
         });
         // Render each diagram in isolation: `mermaid.run` rejects the whole
         // batch on the first parse error, so one invalid diagram used to abort
@@ -110,7 +118,7 @@ export class MarkdownToHtml {
                     actions: false,
                     tooltip: false,
                     renderer: 'svg',
-                    theme: 'latimes', // only render light theme
+                    theme: this._options.vegaTheme ?? 'latimes',
                     // Parse the spec to an AST and evaluate expressions with the
                     // interpreter instead of compiling them via `new Function`,
                     // which the sandboxed renderer's CSP blocks (`unsafe-eval`
@@ -121,13 +129,13 @@ export class MarkdownToHtml {
             }
             else if (functionType === 'sequence') {
                 Object.assign(options, {
-                    theme: this._muya?.options.sequenceTheme ?? 'hand',
+                    theme: this._options.sequenceTheme ?? 'hand',
                 });
             }
 
             try {
                 if (functionType === 'plantuml') {
-                    const diagram = render.parse(rawCode, this._muya?.options.plantumlServer);
+                    const diagram = render.parse(rawCode, this._options.plantumlServer);
                     diagramContainer.innerHTML = '';
                     diagram.insertImgElement(diagramContainer);
                 }
@@ -181,13 +189,14 @@ export class MarkdownToHtml {
 
     // render pure html by marked
     async renderHtml() {
-        const footnote = this._muya?.options?.footnote ?? false;
+        const footnote = this._options.footnote ?? false;
         let html = getHighlightHtml(this.markdown, {
-            superSubScript: this._muya?.options?.superSubScript ?? true,
+            superSubScript: this._options.superSubScript ?? true,
             footnote,
             isGitlabCompatibilityEnabled:
-        this._muya?.options?.isGitlabCompatibilityEnabled ?? true,
-            math: this._muya?.options?.math ?? true,
+        this._options.isGitlabCompatibilityEnabled ?? true,
+            math: this._options.math ?? true,
+            disableHtml: this._options.disableHtml ?? false,
         });
 
         // Post-process footnotes into the standard GFM / pandoc shape (inline
@@ -203,36 +212,54 @@ export class MarkdownToHtml {
             = document.createElement('div'));
         exportContainer.classList.add('mu-render-container');
         exportContainer.innerHTML = html;
-        document.body.appendChild(exportContainer);
+        const diagramSelector
+            = 'code.language-mermaid, code.language-vega-lite, code.language-plantuml, code.language-flowchart, code.language-sequence';
+        const needsConnectedLayout = !!exportContainer.querySelector(diagramSelector);
 
-        // render only render the light theme of mermaid and diagram...
-        await this._renderMermaid();
-        await this._renderDiagram();
+        if (needsConnectedLayout) {
+            // Diagram libraries require a connected, measurable node. Keep it
+            // off-screen and contained so it cannot flash or trigger full-page
+            // layout; ordinary Markdown never touches document.body at all.
+            Object.assign(exportContainer.style, {
+                position: 'fixed',
+                left: '-100000px',
+                top: '0',
+                width: '980px',
+                visibility: 'hidden',
+                pointerEvents: 'none',
+                contain: 'layout style paint',
+            });
+            document.body.appendChild(exportContainer);
+        }
 
-        // Inject github-compatible slug ids onto exported headings so the
-        // exported document's [TOC] / `getHtmlToc` `href="#slug"` anchors
-        // resolve. Scoped to this export DOM path — the conformance
-        // renderer (`renderToStaticHTML`) is deliberately left untouched.
-        this._injectHeadingIds(exportContainer);
+        try {
+            await this._renderMermaid();
+            await this._renderDiagram();
 
-        let result = exportContainer.innerHTML;
-        exportContainer.remove();
+            // Inject github-compatible slug ids onto exported headings so the
+            // exported document's [TOC] anchors resolve.
+            this._injectHeadingIds(exportContainer);
 
-        // hack to add arrow marker to output html
-        // TODO: JOCS, are these codes still needed?
-        const paths = document.querySelectorAll('path[id^=raphael-marker-]');
-        const def = '<defs style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">';
-        result = result.replace(def, () => {
-            let str = '';
-            for (const path of paths)
-                str += path.outerHTML;
+            let result = exportContainer.innerHTML;
 
-            return `${def}${str}`;
-        });
+            // Preserve Raphael arrow markers generated inside this render,
+            // without collecting similarly-named paths elsewhere in the app.
+            const paths = exportContainer.querySelectorAll('path[id^=raphael-marker-]');
+            const def = '<defs style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);">';
+            result = result.replace(def, () => {
+                let str = '';
+                for (const path of paths)
+                    str += path.outerHTML;
 
-        this._exportContainer = null;
+                return `${def}${str}`;
+            });
 
-        return `<article class="markdown-body">${result}</article>`;
+            return `<article class="markdown-body">${result}</article>`;
+        }
+        finally {
+            exportContainer.remove();
+            this._exportContainer = null;
+        }
     }
 
     /**

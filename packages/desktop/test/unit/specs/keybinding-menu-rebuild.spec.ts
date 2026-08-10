@@ -36,7 +36,10 @@ vi.mock('main_renderer/config', () => ({ isLinux: false, isOsx: true, isWindows:
 vi.mock('main_renderer/menu/actions/edit', () => ({ updateSidebarMenu: vi.fn() }))
 vi.mock('main_renderer/menu/actions/format', () => ({ updateFormatMenu: vi.fn() }))
 vi.mock('main_renderer/menu/actions/paragraph', () => ({ updateSelectionMenus: vi.fn() }))
-vi.mock('main_renderer/menu/actions/view', () => ({ viewLayoutChanged: vi.fn() }))
+vi.mock('main_renderer/menu/actions/view', () => ({
+  applyEditModeMenuState: vi.fn(),
+  viewLayoutChanged: vi.fn()
+}))
 vi.mock('main_renderer/utils/internalIpc', () => ({ onInternalChannel: vi.fn() }))
 vi.mock('main_renderer/i18n.js', () => ({ setLanguage: vi.fn() }))
 vi.mock('main_renderer/menu/templates', () => ({

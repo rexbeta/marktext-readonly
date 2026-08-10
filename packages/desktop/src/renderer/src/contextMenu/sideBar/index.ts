@@ -13,7 +13,8 @@ import { popupContextMenu, type ContextMenuItem } from '../popupMenu'
 
 export const showContextMenu = (
   event: { clientX: number; clientY: number },
-  hasPathCache: boolean
+  hasPathCache: boolean,
+  editMode = true
 ): void => {
   const contextItems: ContextMenuItem[] = [
     getNewFile(),
@@ -29,8 +30,11 @@ export const showContextMenu = (
     getShowInFolder()
   ]
 
-  // PASTE entry (index 5) toggles based on the cached source path.
-  contextItems[5].enabled = hasPathCache
+  // Copy/show-in-folder are read-only operations. Every filesystem mutation is
+  // disabled in viewer mode; the project store repeats the guard as defence in
+  // depth for keyboard/programmatic events.
+  for (const index of [0, 1, 4, 5, 7, 8]) contextItems[index].enabled = editMode
+  contextItems[5].enabled = editMode && hasPathCache
 
   const items: ContextMenuItem[] = contextItems.map((item) => {
     if (!item || item.type === 'separator') return item

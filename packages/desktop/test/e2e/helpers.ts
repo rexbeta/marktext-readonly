@@ -216,6 +216,13 @@ export const enterEditMode = async(
   app: ElectronApplication
 ): Promise<void> => {
   if (await page.locator('.editor-component').count()) return
+  // Reader initialization owns the startup editMode=false transition. Wait for
+  // it to finish before clicking the menu, otherwise a slow initial render can
+  // overwrite this explicit opt-in and leave the helper waiting forever.
+  await page.waitForSelector('.readonly-reader .markdown-body', {
+    state: 'attached',
+    timeout: 15000
+  })
   await waitForMenuReady(app)
   await clickMenuById(app, 'editModeMenuItem')
   await waitForEditor(page)

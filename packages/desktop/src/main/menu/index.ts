@@ -8,7 +8,7 @@ import { updateSidebarMenu } from '../menu/actions/edit'
 import { updateFormatMenu } from '../menu/actions/format'
 import { updateSelectionMenus, type SelectionState } from '../menu/actions/paragraph'
 import { onInternalChannel } from '../utils/internalIpc'
-import { viewLayoutChanged } from '../menu/actions/view'
+import { applyEditModeMenuState, viewLayoutChanged } from '../menu/actions/view'
 import configureMenu, { configSettingMenu } from '../menu/templates'
 import { setLanguage } from '../i18n.js'
 import type Preference from '../preferences'
@@ -292,12 +292,7 @@ class AppMenu {
       const { menu: newMenu } = this._buildEditorMenu(recentUsedDocuments)
       if (!newMenu) return
 
-      // all other menu items are set automatically
-      updateMenuItem(oldMenu, newMenu, 'sourceCodeModeMenuItem')
-      updateMenuItem(oldMenu, newMenu, 'typewriterModeMenuItem')
-      updateMenuItem(oldMenu, newMenu, 'focusModeMenuItem')
-      updateMenuItem(oldMenu, newMenu, 'sideBarMenuItem')
-      updateMenuItem(oldMenu, newMenu, 'tabBarMenuItem')
+      restoreEditorMenuState(oldMenu, newMenu)
 
       // update window menu
       value.menu = newMenu
@@ -325,11 +320,7 @@ class AppMenu {
         const { menu: rebuilt } = this._buildEditorMenu(recentUsedDocuments)
         if (!rebuilt) return
 
-        updateMenuItem(oldMenu, rebuilt, 'sourceCodeModeMenuItem')
-        updateMenuItem(oldMenu, rebuilt, 'typewriterModeMenuItem')
-        updateMenuItem(oldMenu, rebuilt, 'focusModeMenuItem')
-        updateMenuItem(oldMenu, rebuilt, 'sideBarMenuItem')
-        updateMenuItem(oldMenu, rebuilt, 'tabBarMenuItem')
+        restoreEditorMenuState(oldMenu, rebuilt)
         newMenu = rebuilt
       } else if (type === MenuType.SETTINGS) {
         newMenu = this._buildSettingMenu().menu
@@ -552,6 +543,22 @@ const updateMenuItem = (oldMenus: Menu, newMenus: Menu, id: string): void => {
   if (oldItem && newItem) {
     newItem.checked = oldItem.checked
   }
+}
+
+const restoreEditorMenuState = (oldMenu: Menu, newMenu: Menu): void => {
+  for (const id of [
+    'sourceCodeModeMenuItem',
+    'typewriterModeMenuItem',
+    'focusModeMenuItem',
+    'sideBarMenuItem',
+    'tabBarMenuItem',
+    'editModeMenuItem'
+  ]) {
+    updateMenuItem(oldMenu, newMenu, id)
+  }
+
+  const editMode = !!newMenu.getMenuItemById('editModeMenuItem')?.checked
+  applyEditModeMenuState(newMenu, editMode)
 }
 
 // ----------------------------------------------

@@ -28,6 +28,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
 import { useEditorStore } from '@/store/editor'
+import { usePreferencesStore } from '@/store/preferences'
 import FileIcon from './icon.vue'
 import { showContextMenu } from '../../contextMenu/sideBar'
 import bus from '../../bus'
@@ -40,6 +41,7 @@ const props = defineProps<{
 
 const projectStore = useProjectStore()
 const editorStore = useEditorStore()
+const preferencesStore = usePreferencesStore()
 
 const newName = ref('')
 const fileEl = ref<HTMLDivElement | null>(null)
@@ -87,7 +89,7 @@ onMounted(() => {
     fileEl.value.addEventListener('contextmenu', (event) => {
       event.preventDefault()
       projectStore.CHANGE_ACTIVE_ITEM(props.file)
-      showContextMenu(event, !!clipboard.value)
+      showContextMenu(event, !!clipboard.value, preferencesStore.editMode)
     })
   }
 

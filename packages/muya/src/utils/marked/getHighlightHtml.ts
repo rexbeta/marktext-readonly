@@ -37,7 +37,7 @@ function highlight(code: string, lang: string) {
 
 export function getHighlightHtml(src: string, options: ILexOption = {}) {
     options = Object.assign({}, DEFAULT_OPTIONS, options);
-    const { footnote, frontMatter, math, isGitlabCompatibilityEnabled, superSubScript }
+    const { footnote, frontMatter, math, isGitlabCompatibilityEnabled, superSubScript, disableHtml }
         = options;
 
     // Build a fresh Marked instance per call. `Marked.use({ walkTokens })`
@@ -71,6 +71,16 @@ export function getHighlightHtml(src: string, options: ILexOption = {}) {
 
     if (footnote)
         marked.use(footnoteExtension());
+
+    if (disableHtml) {
+        marked.use({
+            renderer: {
+                html({ text }) {
+                    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                },
+            },
+        });
+    }
 
     let html = '';
 

@@ -214,12 +214,14 @@ export const useProjectStore = defineStore('project', () => {
       window.electron.shell.showItemInFolder(pathname)
     })
     bus.on('SIDEBAR::new', (type: unknown) => {
+      if (!preferencesStore.editMode) return
       const { pathname, isDirectory } = activeItem.value
       const dirname = isDirectory ? pathname : window.path.dirname(pathname)
       createCache.value = { dirname, type: String(type) }
       bus.emit('SIDEBAR::show-new-input')
     })
     bus.on('SIDEBAR::remove', () => {
+      if (!preferencesStore.editMode) return
       const { pathname } = activeItem.value
       window.electron.ipcRenderer.invoke('mt::fs-trash-item', pathname).catch((err) => {
         notice.notify({
@@ -234,6 +236,7 @@ export const useProjectStore = defineStore('project', () => {
       clipboard.value = { type: String(type), src }
     })
     bus.on('SIDEBAR::paste', () => {
+      if (!preferencesStore.editMode) return
       const cb = clipboard.value
       const { pathname, isDirectory } = activeItem.value
       const dirname = isDirectory ? pathname : window.path.dirname(pathname)
@@ -263,6 +266,7 @@ export const useProjectStore = defineStore('project', () => {
       }
     })
     bus.on('SIDEBAR::rename', () => {
+      if (!preferencesStore.editMode) return
       const { pathname } = activeItem.value
       renameCache.value = pathname
       bus.emit('SIDEBAR::show-rename-input')
@@ -270,6 +274,7 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   async function CREATE_FILE_DIRECTORY(name: string): Promise<void> {
+    if (!preferencesStore.editMode) return
     const cache = createCache.value as CreateCacheEntry
     const { dirname, type } = cache
 
@@ -308,6 +313,7 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   function RENAME_IN_SIDEBAR(name: string): void {
+    if (!preferencesStore.editMode) return
     const editorStore = useEditorStore()
     const src = renameCache.value
     if (!src) return

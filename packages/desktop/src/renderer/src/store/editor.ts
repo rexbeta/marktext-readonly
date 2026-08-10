@@ -688,6 +688,12 @@ export const useEditorStore = defineStore('editor', {
 
     ASK_FOR_SAVE_ALL(closeTabs: boolean): void {
       const { tabs } = this
+      if (!usePreferencesStore().editMode) {
+        // Closing already-saved tabs is safe; keep any dirty tab open until the
+        // user explicitly re-enters Edit Mode and chooses how to handle it.
+        if (closeTabs) this.CLOSE_TABS(tabs.filter((file) => file.isSaved).map((file) => file.id))
+        return
+      }
       const projectStore = useProjectStore()
       const unsavedFiles = tabs
         .filter((file) => !(file.isSaved && /[^\n]/.test(file.markdown)))
@@ -1056,6 +1062,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     CLOSE_UNSAVED_TAB(file: IFileState): void {
+      if (!usePreferencesStore().editMode) return
       const { id, pathname, filename, markdown } = file
       const options = getOptionsFromState(file)
       window.electron.ipcRenderer.send('mt::save-and-close-tabs', [

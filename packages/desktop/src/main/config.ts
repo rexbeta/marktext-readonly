@@ -79,7 +79,11 @@ export const LINE_ENDING_REG = /(?:\r\n|\n)/g
 export const LF_LINE_ENDING_REG = /(?:[^\r]\n)|(?:^\n$)/
 export const CRLF_LINE_ENDING_REG = /\r\n/
 
-export const GITHUB_REPO_URL = 'https://github.com/marktext/marktext'
+export const GITHUB_REPO_URL = 'https://github.com/rexbeta/marktext-readonly'
+// Releases are currently published manually and do not include the signed
+// provider metadata electron-updater requires. "Check for Updates" therefore
+// opens this fork's Releases page instead of querying an invalid feed.
+export const AUTO_UPDATE_ENABLED = false
 // copy from muya
 export const URL_REG =
   /^http(s)?:\/\/([a-z0-9\-._~]+\.[a-z]{2,}|[0-9.]+|localhost|\[[a-f0-9.:]+\])(:[0-9]{1,5})?(\/[\S]+)?/i

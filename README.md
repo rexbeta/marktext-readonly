@@ -27,7 +27,8 @@ Every application session starts in read-only mode:
 
 - Markdown syntax is not exposed during normal reading, including when selecting inline code.
 - Text selection, copy, find, internal navigation, and clickable links remain available.
-- Save, Save As, replacement, direct typing, and Source Code Mode are disabled.
+- Save, Save As, replacement, direct typing, Source Code Mode, and sidebar filesystem
+  mutations (create, cut/paste, rename, and move to trash) are disabled.
 - Images, Mermaid diagrams, math, tables, code blocks, and other supported Markdown content
   are rendered as document content.
 - The configured document width is applied immediately, and the scroll position is preserved
@@ -41,12 +42,16 @@ rendered reader. Edit Mode is intentionally not persisted across application ses
 Read-only mode is an interaction safeguard against accidental modification; it is not a
 security sandbox or a file-permission mechanism. Do not treat untrusted Markdown as safe solely
 because it is opened in read-only mode. Links and referenced resources should be reviewed with
-the same care as in other document viewers.
+the same care as in other document viewers. Remote images and diagrams can make network
+requests; in particular, PlantUML uses the server configured in Preferences (the upstream
+default is the public `plantuml.com` service).
 
 ## Downloads
 
 Prebuilt packages are published on the
 [GitHub Releases page](https://github.com/rexbeta/marktext-readonly/releases).
+Automatic in-app installation is disabled until releases include a signed, supported update
+feed; **Check for Updates** opens this Releases page instead.
 
 The first release provides a macOS Apple Silicon (`arm64`) DMG and ZIP. These community builds
 are ad-hoc signed so the application bundle can be verified for integrity, but they are not

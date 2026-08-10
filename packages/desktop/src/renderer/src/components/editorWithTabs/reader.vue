@@ -46,19 +46,24 @@
     <div
       ref="content"
       class="readonly-content"
+      :style="contentStyle"
       v-html="html"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import 'github-markdown-css/github-markdown.css'
-import 'katex/dist/katex.css'
-import 'prismjs/themes/prism.css'
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import githubMarkdownDarkCss from 'github-markdown-css/github-markdown-dark.css?inline'
+import githubMarkdownLightCss from 'github-markdown-css/github-markdown-light.css?inline'
+import katexCss from 'katex/dist/katex.css?inline'
+import prismCss from 'prismjs/themes/prism.css?inline'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
 import bus from '@/bus'
+import { DEFAULT_EDITOR_FONT_FAMILY } from '@/config'
 import { useEditorStore } from '@/store/editor'
+import { usePreferencesStore } from '@/store/preferences'
 import markdownToHtml from '@/util/markdownToHtml'
 import { resolveLocalImageSrc } from '@/util/resolveImageSrc'
 
@@ -69,6 +74,19 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const editorStore = useEditorStore()
+const preferencesStore = usePreferencesStore()
+const {
+  editorFontFamily,
+  fontSize,
+  lineHeight,
+  superSubScript,
+  footnote,
+  isHtmlEnabled,
+  isGitlabCompatibilityEnabled,
+  sequenceTheme,
+  plantumlServer,
+  theme
+} = storeToRefs(preferencesStore)
 const scrollContainer = ref<HTMLElement | null>(null)
 const content = ref<HTMLElement | null>(null)
 const searchInput = ref<HTMLInputElement | null>(null)
@@ -79,6 +97,38 @@ const matches = ref<HTMLElement[]>([])
 const activeMatch = ref(-1)
 let renderVersion = 0
 let scrollHandler: (() => void) | null = null
+let readerStyleElement: HTMLStyleElement | null = null
+let scrollRestoreObserver: ResizeObserver | null = null
+let scrollRestoreTimer: number | null = null
+let scrollRestoreFrame: number | null = null
+
+const isDarkTheme = computed(() => /dark/i.test(theme.value))
+const contentStyle = computed(() => ({
+  '--readonly-font-family': editorFontFamily.value
+    ? `${editorFontFamily.value}, ${DEFAULT_EDITOR_FONT_FAMILY}`
+    : DEFAULT_EDITOR_FONT_FAMILY,
+  '--readonly-font-size': `${fontSize.value}px`,
+  '--readonly-line-height': String(lineHeight.value)
+}))
+const renderOptions = computed(() => ({
+  superSubScript: superSubScript.value,
+  footnote: footnote.value,
+  disableHtml: !isHtmlEnabled.value,
+  isGitlabCompatibilityEnabled: isGitlabCompatibilityEnabled.value,
+  sequenceTheme: sequenceTheme.value === 'simple' ? ('simple' as const) : ('hand' as const),
+  plantumlServer: plantumlServer.value,
+  mermaidTheme: isDarkTheme.value ? 'dark' : 'default',
+  vegaTheme: isDarkTheme.value ? 'dark' : 'latimes'
+}))
+
+const updateReaderStyles = () => {
+  if (!readerStyleElement) return
+  readerStyleElement.textContent = [
+    isDarkTheme.value ? githubMarkdownDarkCss : githubMarkdownLightCss,
+    katexCss,
+    prismCss
+  ].join('\n')
+}
 
 const persistScrollPosition = () => {
   const tab = editorStore.currentFile
@@ -88,13 +138,39 @@ const persistScrollPosition = () => {
   }
 }
 
+const cancelScrollRestore = () => {
+  scrollRestoreObserver?.disconnect()
+  scrollRestoreObserver = null
+  if (scrollRestoreTimer !== null) window.clearTimeout(scrollRestoreTimer)
+  scrollRestoreTimer = null
+  if (scrollRestoreFrame !== null) cancelAnimationFrame(scrollRestoreFrame)
+  scrollRestoreFrame = null
+}
+
 const restoreScrollPosition = () => {
   const scrollTop = editorStore.currentFile?.scrollTop
-  if (typeof scrollTop !== 'number') return
-  // Wait until the newly rendered article has a measurable scroll height.
-  requestAnimationFrame(() => {
-    if (scrollContainer.value) scrollContainer.value.scrollTop = scrollTop
-  })
+  const article = content.value
+  if (typeof scrollTop !== 'number' || !article) return
+
+  cancelScrollRestore()
+  const apply = () => {
+    scrollRestoreFrame = null
+    const container = scrollContainer.value
+    if (!container) return
+    container.scrollTop = scrollTop
+    if (Math.abs(container.scrollTop - scrollTop) < 1) cancelScrollRestore()
+  }
+  const schedule = () => {
+    if (scrollRestoreFrame === null) scrollRestoreFrame = requestAnimationFrame(apply)
+  }
+
+  // Images and async diagrams can increase the document height after the first
+  // frame. Retry whenever the rendered content resizes so an early clamp does
+  // not silently move the reader upward.
+  scrollRestoreObserver = new ResizeObserver(schedule)
+  scrollRestoreObserver.observe(article)
+  scrollRestoreTimer = window.setTimeout(cancelScrollRestore, 5000)
+  schedule()
 }
 
 const clearHighlights = () => {
@@ -115,7 +191,7 @@ const highlightMatches = () => {
 
   const textNodes: Text[] = []
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-    acceptNode(node) {
+    acceptNode (node) {
       const parent = node.parentElement
       if (!node.textContent || !parent || parent.closest('script, style, textarea, svg')) {
         return NodeFilter.FILTER_REJECT
@@ -202,7 +278,8 @@ const handleClick = (event: MouseEvent) => {
 
 const render = async () => {
   const version = ++renderVersion
-  const rendered = await markdownToHtml(props.markdown)
+  cancelScrollRestore()
+  const rendered = await markdownToHtml(props.markdown, renderOptions.value)
   if (version !== renderVersion) return
   html.value = rendered
   await nextTick()
@@ -223,10 +300,15 @@ const render = async () => {
   if (query.value) highlightMatches()
 }
 
-watch(() => props.markdown, render, { immediate: true })
+watch([() => props.markdown, renderOptions], render, { immediate: true, deep: true })
 watch(query, highlightMatches)
+watch(isDarkTheme, updateReaderStyles)
 
 onMounted(() => {
+  readerStyleElement = document.createElement('style')
+  readerStyleElement.dataset.marktextReadonlyStyles = 'true'
+  updateReaderStyles()
+  scrollContainer.value?.prepend(readerStyleElement)
   scrollHandler = persistScrollPosition
   scrollContainer.value?.addEventListener('scroll', scrollHandler, { passive: true })
   bus.on('find', openSearch)
@@ -240,11 +322,14 @@ onBeforeUnmount(() => {
   // Capture the latest position synchronously before Vue removes the reader;
   // the editor mounted in the same mode switch restores this exact value.
   persistScrollPosition()
+  cancelScrollRestore()
   if (scrollHandler) {
     scrollContainer.value?.removeEventListener('scroll', scrollHandler)
     scrollHandler = null
   }
   renderVersion++
+  readerStyleElement?.remove()
+  readerStyleElement = null
   bus.off('find', openSearch)
   bus.off('findNext')
   bus.off('findPrev')
@@ -277,9 +362,9 @@ onBeforeUnmount(() => {
   padding: 60px 0 100px;
   color: var(--editorColor);
   background: transparent;
-  font-family: var(--editorFontFamily, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-  font-size: var(--editorFontSize, 16px);
-  line-height: var(--editorLineHeight, 1.6);
+  font-family: var(--readonly-font-family);
+  font-size: var(--readonly-font-size);
+  line-height: var(--readonly-line-height);
 }
 
 .readonly-content :deep(.markdown-body img),

@@ -62,6 +62,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/store/project'
+import { usePreferencesStore } from '@/store/preferences'
 import { showContextMenu } from '../../contextMenu/sideBar'
 import bus from '../../bus'
 import File from './treeFile.vue'
@@ -74,6 +75,7 @@ const props = defineProps<{
 }>()
 
 const projectStore = useProjectStore()
+const preferencesStore = usePreferencesStore()
 
 const createName = ref('')
 const newName = ref('')
@@ -136,7 +138,7 @@ onMounted(() => {
     folderEl.value.addEventListener('contextmenu', (event) => {
       event.preventDefault()
       projectStore.CHANGE_ACTIVE_ITEM(props.folder)
-      showContextMenu(event, !!clipboard.value)
+      showContextMenu(event, !!clipboard.value, preferencesStore.editMode)
     })
   }
   bus.on('SIDEBAR::show-new-input', handleInputFocus)

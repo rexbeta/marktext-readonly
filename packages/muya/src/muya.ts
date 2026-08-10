@@ -130,10 +130,22 @@ export class Muya {
     static plugins: IPlugin[] = [];
 
     static use(plugin: IMuyaPluginConstructor, options: Record<string, unknown> = {}) {
-        this.plugins.push({
+        const registration = {
             plugin,
             options,
-        });
+        };
+        const registeredIndex = this.plugins.findIndex(
+            ({ plugin: registeredPlugin }) => registeredPlugin.pluginName === plugin.pluginName,
+        );
+
+        // Plugin registration is process-global while Muya instances may be
+        // mounted repeatedly. Replace an existing registration so each
+        // pluginName is instantiated exactly once and receives the latest
+        // host callbacks/options.
+        if (registeredIndex === -1)
+            this.plugins.push(registration);
+        else
+            this.plugins[registeredIndex] = registration;
     }
 
     public readonly version = typeof window.MUYA_VERSION === 'undefined' ? 'dev' : window.MUYA_VERSION;

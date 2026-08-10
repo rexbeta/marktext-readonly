@@ -1,8 +1,8 @@
 import { autoUpdater } from 'electron-updater'
-import { BrowserWindow, Menu, ipcMain } from 'electron'
+import { BrowserWindow, Menu, ipcMain, shell } from 'electron'
 import { COMMANDS } from '../../commands'
 import type { CommandManager } from '../../commands'
-import { isOsx } from '../../config'
+import { AUTO_UPDATE_ENABLED, GITHUB_REPO_URL, isOsx } from '../../config'
 
 let runningUpdate = false
 let win: BrowserWindow | null = null
@@ -71,6 +71,10 @@ export const userSetting = (): void => {
 }
 
 export const checkUpdates = (browserWindow: BrowserWindow | null): void => {
+  if (!AUTO_UPDATE_ENABLED) {
+    shell.openExternal(`${GITHUB_REPO_URL}/releases`)
+    return
+  }
   if (!runningUpdate) {
     runningUpdate = true
     win = browserWindow

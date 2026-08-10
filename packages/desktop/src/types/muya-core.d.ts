@@ -42,6 +42,18 @@ declare module '@muyajs/core' {
     githubSlug: string
   }
 
+  export interface IMuyaOptions {
+    superSubScript: boolean
+    footnote: boolean
+    disableHtml: boolean
+    isGitlabCompatibilityEnabled: boolean
+    sequenceTheme: 'hand' | 'simple'
+    plantumlServer: string
+    mermaidTheme: string
+    vegaTheme: string
+    [key: string]: unknown
+  }
+
   // The editor instance surface is kept permissive (`any`) — every member
   // that crosses the editor boundary was already `any` in editor.vue.
   export class Muya {
@@ -72,7 +84,7 @@ declare module '@muyajs/core' {
 
   export class MarkdownToHtml {
     markdown: string
-    constructor(markdown: string, muya?: unknown)
+    constructor(markdown: string, muya?: unknown, renderOptions?: Partial<IMuyaOptions>)
     renderHtml(): Promise<string>
     generate(options?: {
       title?: string

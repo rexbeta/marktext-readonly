@@ -22,6 +22,7 @@
           t('sideBar.tree.openedFiles')
         }}</span>
         <a
+          v-if="preferencesStore.editMode"
           href="javascript:;"
           :title="t('sideBar.tree.saveAll')"
           @click.stop="saveAll(false)"
@@ -221,7 +222,7 @@ const createFile = (): void => {
 
 const handleRootContextMenu = (event: MouseEvent): void => {
   projectStore.CHANGE_ACTIVE_ITEM(props.projectTree)
-  showContextMenu(event, !!clipboard.value)
+  showContextMenu(event, !!clipboard.value, preferencesStore.editMode)
 }
 
 const toggleOpenedFiles = (): void => {

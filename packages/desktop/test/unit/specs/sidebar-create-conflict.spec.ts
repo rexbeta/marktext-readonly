@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import type * as FileSystemModule from '@/util/fileSystem'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
@@ -32,6 +34,7 @@ vi.mock('@/util/fileSystem', async(orig) => {
 })
 
 import { useProjectStore } from '@/store/project'
+import { usePreferencesStore } from '@/store/preferences'
 import { create } from '@/util/fileSystem'
 import notice from '@/services/notification'
 
@@ -43,6 +46,7 @@ describe('CREATE_FILE_DIRECTORY — name conflict guard (#1946)', () => {
 
   it('does not create (overwrite) when a file with the same name exists; notifies instead', async() => {
     window.fileUtils.pathExists = vi.fn(() => Promise.resolve(true))
+    usePreferencesStore().editMode = true
     const store = useProjectStore()
     store.createCache = { dirname: '/docs', type: 'file' }
 
@@ -54,6 +58,7 @@ describe('CREATE_FILE_DIRECTORY — name conflict guard (#1946)', () => {
 
   it('creates the file when there is no conflict', async() => {
     window.fileUtils.pathExists = vi.fn(() => Promise.resolve(false))
+    usePreferencesStore().editMode = true
     const store = useProjectStore()
     store.createCache = { dirname: '/docs', type: 'file' }
 
@@ -61,5 +66,16 @@ describe('CREATE_FILE_DIRECTORY — name conflict guard (#1946)', () => {
 
     expect(create).toHaveBeenCalledWith('/docs/fresh.md', 'file')
     expect(notice.notify).not.toHaveBeenCalled()
+  })
+
+  it('does not create files while Edit Mode is off', async() => {
+    window.fileUtils.pathExists = vi.fn(() => Promise.resolve(false))
+    const store = useProjectStore()
+    store.createCache = { dirname: '/docs', type: 'file' }
+
+    await store.CREATE_FILE_DIRECTORY('readonly')
+
+    expect(window.fileUtils.pathExists).not.toHaveBeenCalled()
+    expect(create).not.toHaveBeenCalled()
   })
 })

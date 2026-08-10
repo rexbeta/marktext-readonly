@@ -82,6 +82,41 @@ export const reloadImageCache = (win: Win): void => {
   }
 }
 
+/**
+ * Apply every menu constraint derived from the current read-only/edit state.
+ * This is also used after Electron menus are rebuilt, because checked/enabled
+ * mutations on the old Menu object are not carried into the replacement.
+ */
+export const applyEditModeMenuState = (applicationMenu: Menu, editMode: boolean): void => {
+  const editModeItem = applicationMenu.getMenuItemById(editModeMenuItemId)
+  if (editModeItem) editModeItem.checked = editMode
+
+  const sourceCodeItem = applicationMenu.getMenuItemById('sourceCodeModeMenuItem')
+  if (sourceCodeItem) sourceCodeItem.enabled = editMode
+
+  const editorNavigationEnabled = editMode && !sourceCodeItem?.checked
+  for (const id of [typewriterModeMenuItemId, focusModeMenuItemId]) {
+    const item = applicationMenu.getMenuItemById(id)
+    if (item) item.enabled = editorNavigationEnabled
+  }
+
+  for (const id of [
+    'saveMenuItem',
+    'saveAsMenuItem',
+    'autoSaveMenuItem',
+    'moveToMenuItem',
+    'renameMenuItem'
+  ]) {
+    const item = applicationMenu.getMenuItemById(id)
+    if (item) item.enabled = editMode
+  }
+
+  for (const id of ['paragraphMenuEntry', 'formatMenuItem']) {
+    const item = applicationMenu.getMenuItemById(id)
+    item?.submenu?.items.forEach((child) => (child.enabled = editorNavigationEnabled))
+  }
+}
+
 // --- Commands -------------------------------------------------------------
 
 export const loadViewCommands = (commandManager: CommandManager): void => {
@@ -144,24 +179,7 @@ export const viewLayoutChanged = (
         break
       case 'editMode': {
         const enabled = !!value
-        changeMenuByName(editModeMenuItemId, enabled)
-        for (const id of ['sourceCodeModeMenuItem', 'typewriterModeMenuItem', 'focusModeMenuItem']) {
-          disableMenuByName(id, enabled)
-        }
-        for (const id of [
-          'saveMenuItem',
-          'saveAsMenuItem',
-          'autoSaveMenuItem',
-          'moveToMenuItem',
-          'renameMenuItem'
-        ]) {
-          const item = applicationMenu.getMenuItemById(id)
-          if (item) item.enabled = enabled
-        }
-        for (const id of ['paragraphMenuEntry', 'formatMenuItem']) {
-          const item = applicationMenu.getMenuItemById(id)
-          item?.submenu?.items.forEach((child) => (child.enabled = enabled))
-        }
+        applyEditModeMenuState(applicationMenu, enabled)
         break
       }
       case 'typewriter':

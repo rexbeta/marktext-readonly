@@ -87,6 +87,46 @@ test.describe('default read-only mode', () => {
     await expect(page.locator('.editor-component')).toHaveCount(0)
   })
 
+  test('applies reader typography preferences and preserves menu state after a rebuild', async() => {
+    await sendIpcToRenderer(app, 'mt::user-preference', {
+      editorFontFamily: 'Courier New',
+      fontSize: 19,
+      lineHeight: 2,
+      theme: 'dark'
+    })
+    await app.evaluate(({ ipcMain }) => {
+      ipcMain.emit('broadcast-preferences-changed', { theme: 'dark' })
+    })
+
+    await expect
+      .poll(() =>
+        page.locator('.readonly-content .markdown-body').evaluate((element) => {
+          const style = getComputedStyle(element)
+          return {
+            fontFamily: style.fontFamily,
+            fontSize: style.fontSize,
+            lineHeight: style.lineHeight
+          }
+        })
+      )
+      .toEqual({ fontFamily: expect.stringContaining('Courier New'), fontSize: '19px', lineHeight: '38px' })
+
+    await expect
+      .poll(() =>
+        app.evaluate(({ Menu }) => {
+          const menu = Menu.getApplicationMenu()
+          return {
+            editMode: menu?.getMenuItemById('editModeMenuItem')?.checked,
+            save: menu?.getMenuItemById('saveMenuItem')?.enabled,
+            format: menu?.getMenuItemById('formatMenuItem')?.submenu?.items.every(
+              (item) => !item.enabled
+            )
+          }
+        })
+      )
+      .toEqual({ editMode: false, save: false, format: true })
+  })
+
   test('disables save and ignores typing in reader mode', async() => {
     const menuState = await app.evaluate(({ Menu }) => {
       const menu = Menu.getApplicationMenu()
@@ -143,5 +183,19 @@ test.describe('default read-only mode', () => {
     await expect
       .poll(() => page.locator('.readonly-reader').evaluate((element) => element.scrollTop))
       .toBeGreaterThan(1350)
+  })
+
+  test('does not leak Muya floating UI across repeated Edit Mode mounts', async() => {
+    for (let cycle = 0; cycle < 2; cycle++) {
+      await clickMenuById(app, 'editModeMenuItem')
+      await page.waitForSelector('.editor-component', { timeout: 10000 })
+      await expect(page.locator('.mu-float-wrapper')).not.toHaveCount(0)
+
+      await clickMenuById(app, 'editModeMenuItem')
+      await page.waitForSelector('.readonly-reader .markdown-body', { timeout: 10000 })
+      await expect(
+        page.locator('.mu-float-wrapper, .mu-front-button-wrapper, .mu-transformer')
+      ).toHaveCount(0)
+    }
   })
 })

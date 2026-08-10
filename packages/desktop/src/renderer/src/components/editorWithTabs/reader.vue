@@ -60,6 +60,7 @@ import prismCss from 'prismjs/themes/prism.css?inline'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
+import { isDarkThemeId } from 'common/theme'
 import bus from '@/bus'
 import { DEFAULT_EDITOR_FONT_FAMILY } from '@/config'
 import { useEditorStore } from '@/store/editor'
@@ -102,7 +103,7 @@ let scrollRestoreObserver: ResizeObserver | null = null
 let scrollRestoreTimer: number | null = null
 let scrollRestoreFrame: number | null = null
 
-const isDarkTheme = computed(() => /dark/i.test(theme.value))
+const isDarkTheme = computed(() => isDarkThemeId(theme.value))
 const contentStyle = computed(() => ({
   '--readonly-font-family': editorFontFamily.value
     ? `${editorFontFamily.value}, ${DEFAULT_EDITOR_FONT_FAMILY}`

@@ -256,6 +256,23 @@ const showUnsavedFilesMessage = async(
   }
 }
 
+const showDiscardFilesMessage = async(
+  win: BrowserWindow,
+  files: UnsavedFile[]
+): Promise<boolean> => {
+  const { response } = await dialog.showMessageBox(win, {
+    type: 'warning',
+    buttons: [t('dialog.dontSave'), t('dialog.cancel')],
+    defaultId: 1,
+    message: t('dialog.changesWillBeLost'),
+    detail: files.map((file) => file.filename).join('\n'),
+    cancelId: 1,
+    noLink: true
+  })
+
+  return response === 0
+}
+
 const noticePandocNotFound = (win: BrowserWindow): void => {
   win.webContents.send('mt::pandoc-not-exists', {
     title: t('dialog.importWarning'),
@@ -333,6 +350,18 @@ ipcMain.on('mt::save-and-close-tabs', async(e, unsavedFiles: UnsavedFile[]) => {
   } else {
     const tabIds = unsavedFiles.map((f) => f.id)
     win.webContents.send('mt::force-close-tabs-by-id', tabIds)
+  }
+})
+
+ipcMain.on('mt::discard-and-close-tabs', async(e, unsavedFiles: UnsavedFile[]) => {
+  const win = BrowserWindow.fromWebContents(e.sender)
+  if (!win || unsavedFiles.length === 0) return
+
+  if (await showDiscardFilesMessage(win, unsavedFiles)) {
+    win.webContents.send(
+      'mt::force-close-tabs-by-id',
+      unsavedFiles.map((file) => file.id)
+    )
   }
 })
 

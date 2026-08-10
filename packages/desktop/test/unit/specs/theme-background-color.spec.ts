@@ -1,11 +1,22 @@
 import { describe, it, expect } from 'vitest'
-import { getThemeBackgroundColor, railscastsThemes, oneDarkThemes } from 'common/theme'
+import {
+  getThemeBackgroundColor,
+  isDarkThemeId,
+  railscastsThemes,
+  oneDarkThemes
+} from 'common/theme'
 
 // #3957: a dark theme used to flash white on launch because the main process
 // only mapped a handful of themes to a background colour and every other theme
 // fell back to white. `getThemeBackgroundColor` now covers every built-in theme
 // and classifies unknown ones, so no dark theme is painted white.
 describe('theme launch background colour (#3957)', () => {
+  it('classifies dark themes whose ids do not contain the word dark', () => {
+    expect(isDarkThemeId('dracula')).toBe(true)
+    expect(isDarkThemeId('tokyo-night')).toBe(true)
+    expect(isDarkThemeId('ulysses')).toBe(false)
+  })
+
   it('never returns white for a dark theme (no white flash on launch)', () => {
     for (const theme of [...railscastsThemes, ...oneDarkThemes]) {
       expect(getThemeBackgroundColor(theme).toLowerCase()).not.toBe('#ffffff')

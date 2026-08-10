@@ -689,9 +689,7 @@ export const useEditorStore = defineStore('editor', {
     ASK_FOR_SAVE_ALL(closeTabs: boolean): void {
       const { tabs } = this
       if (!usePreferencesStore().editMode) {
-        // Closing already-saved tabs is safe; keep any dirty tab open until the
-        // user explicitly re-enters Edit Mode and chooses how to handle it.
-        if (closeTabs) this.CLOSE_TABS(tabs.filter((file) => file.isSaved).map((file) => file.id))
+        if (closeTabs) this.CLOSE_ALL_TABS()
         return
       }
       const projectStore = useProjectStore()
@@ -1062,20 +1060,47 @@ export const useEditorStore = defineStore('editor', {
     },
 
     CLOSE_UNSAVED_TAB(file: IFileState): void {
-      if (!usePreferencesStore().editMode) return
       const { id, pathname, filename, markdown } = file
       const options = getOptionsFromState(file)
+      if (!usePreferencesStore().editMode) {
+        window.electron.ipcRenderer.send('mt::discard-and-close-tabs', [
+          { id, pathname, filename, markdown, options: deepClone(options) }
+        ])
+        return
+      }
       window.electron.ipcRenderer.send('mt::save-and-close-tabs', [
         { id, pathname, filename, markdown, options: deepClone(options) }
       ])
     },
 
-    CLOSE_OTHER_TABS(file: IFileState): void {
-      this.tabs
-        .filter((f) => f.id !== file.id)
-        .forEach((tab) => {
-          this.CLOSE_TAB(tab)
+    CLOSE_READONLY_TABS(tabs: IFileState[]): void {
+      const savedIds = tabs.filter((tab) => tab.isSaved).map((tab) => tab.id)
+      const unsavedFiles = tabs
+        .filter((tab) => !tab.isSaved)
+        .map((tab) => {
+          const { id, pathname, filename, markdown } = tab
+          return {
+            id,
+            pathname,
+            filename,
+            markdown,
+            options: deepClone(getOptionsFromState(tab))
+          }
         })
+
+      this.CLOSE_TABS(savedIds)
+      if (unsavedFiles.length) {
+        window.electron.ipcRenderer.send('mt::discard-and-close-tabs', unsavedFiles)
+      }
+    },
+
+    CLOSE_OTHER_TABS(file: IFileState): void {
+      const tabs = this.tabs.filter((tab) => tab.id !== file.id)
+      if (!usePreferencesStore().editMode) {
+        this.CLOSE_READONLY_TABS(tabs)
+        return
+      }
+      tabs.forEach((tab) => this.CLOSE_TAB(tab))
     },
 
     CLOSE_SAVED_TABS(): void {
@@ -1087,9 +1112,12 @@ export const useEditorStore = defineStore('editor', {
     },
 
     CLOSE_ALL_TABS(): void {
-      this.tabs.slice().forEach((tab) => {
-        this.CLOSE_TAB(tab)
-      })
+      const tabs = this.tabs.slice()
+      if (!usePreferencesStore().editMode) {
+        this.CLOSE_READONLY_TABS(tabs)
+        return
+      }
+      tabs.forEach((tab) => this.CLOSE_TAB(tab))
     },
 
     CLOSE_TABS(tabIdList: string[]): void {

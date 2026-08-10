@@ -112,6 +112,7 @@ export interface IpcSendChannels {
   'mt::clipboard::write-text': [text: string]
   'mt::close-window': []
   'mt::close-window-confirm': [unsavedFiles: UnsavedFile[]]
+  'mt::discard-and-close-tabs': [tabs: UnsavedFile[]]
   'mt::cmd-close-window': []
   'mt::cmd-import-file': []
   'mt::cmd-new-editor-window': []

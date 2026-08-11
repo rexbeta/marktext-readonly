@@ -1,0 +1,25 @@
+packages/desktop/package.json
+  s_e8ba4c8116d0e2::t_695537d10fb631 114-125
+packages/desktop/electron-builder.yml
+  s_e8ba4c8116d0e2::t_695537d10fb631 56
+packages/desktop/test/unit/specs/ripgrep-packaging.spec.ts
+  s_e8ba4c8116d0e2::t_998b034a59e682 1-32
+pnpm-lock.yaml
+  s_e8ba4c8116d0e2::t_2e5f797d3e43f0 317-352
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "800b9097e68c3455db7bc46079b75c37ce0b921f",
+  "prompts": {},
+  "sessions": {
+    "s_e8ba4c8116d0e2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fda2c-cb97-79e1-85e2-64d79a9035e8",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuqinming <liuqinming@zuoyebang.com>"
+    }
+  }
+}

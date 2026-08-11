@@ -1,0 +1,19 @@
+.github/workflows/build.yml
+  s_e8ba4c8116d0e2::t_b7e3d4793f12c4 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "1c6b632b94d548abd7c86bf92698c057b6653187",
+  "prompts": {},
+  "sessions": {
+    "s_e8ba4c8116d0e2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fda2c-cb97-79e1-85e2-64d79a9035e8",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "liuqinming <liuqinming@zuoyebang.com>"
+    }
+  }
+}

@@ -53,6 +53,7 @@ electronLanguages: # Avoid packaging all chromium locales since our app has in-b
 
 asarUnpack:
   - resources/**
+  - node_modules/@vscode/ripgrep-*/bin/**
 fileAssociations:
   - ext: md
     name: Markdown
